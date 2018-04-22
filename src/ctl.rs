@@ -172,6 +172,18 @@ pub struct Msrs {
     pub entries: [MsrEntry; 0]
 }
 
+#[repr(C)]
+#[derive(Copy, Clone)]
+/// From the struct `kvm_ioeventfd`.
+pub struct IoEventFd {
+    pub datamatch: u64,
+    pub addr: u64,
+    pub len: u32,
+    pub fd: i32,
+    pub flags: u32,
+    pub _pad: [u8; 36]
+}
+
 ioctl! {
     /// This identifies the API version as the stable kvm API. It is not
     /// expected that this number will change.  However, Linux 2.6.20 and
@@ -647,4 +659,26 @@ ioctl! {
     /// `KVM_CAP_SET_IDENTITY_MAP_ADDR` capability.  This is only available on the
     /// VM file descriptor.
     write_int kvm_set_identity_map_addr with KVMIO, 0x48
+}
+
+ioctl! {
+
+    /// This ioctl attaches or detaches an ioeventfd to a legal pio/mmio address
+    /// within the guest.  A guest write in the registered address will signal 
+    /// the provided event instead of triggering an exit.
+    ///
+    /// The ioctl takes four possible flags, with this library concerning itself
+    /// with only two of those: `KVM_IOEVENTFD_FLAG_PIO` and 
+    /// `KVM_IOEVENTFD_FLAG_DEASSIGN`.
+    ///
+    /// With KVM_CAP_IOEVENTFD_ANY_LENGTH, a zero length ioeventfd is allowed, 
+    /// and the kernel will ignore the length of guest write and may get a 
+    /// faster vmexit.  The speedup may only apply to specific architectures, 
+    /// but the ioeventfd will work anyway.
+    ///
+    /// # Support
+    /// This ioctl is supported by all architectures, and requires the 
+    /// `KVM_CAP_IOEVENTFD` capability.  This is only available on the VM file
+    /// descriptor.
+    write_ptr kvm_ioeventfd with KVMIO, 0x79; IoEventFd
 }

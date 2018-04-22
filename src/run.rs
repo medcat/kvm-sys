@@ -92,7 +92,7 @@ pub struct ExitHypercall {
     pub _pad: u32
 }
 
-/* KVM_EXIT_TPR_ACCESS */
+/* KVM_EXIT_TPR_ACCESS */ 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ExitTprAccess {

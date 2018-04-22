@@ -200,3 +200,7 @@ pub const KVM_MP_STATE_CHECK_STOP: u32 = 6;
 pub const KVM_MP_STATE_OPERATING: u32 = 7;
 /// The vCPU is in a special load/startup state.  Only supported on s390
 pub const KVM_MP_STATE_LOAD: u32 = 8;
+
+pub const KVM_IOEVENTFD_FLAG_DATAMATCH: u32 = 1 << 0;
+pub const KVM_IOEVENTFD_FLAG_PIO: u32 = 1 << 1;
+pub const KVM_IOEVENTFD_FLAG_DEASSIGN: u32 = 1 << 2;

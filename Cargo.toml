@@ -5,3 +5,5 @@ authors = ["Jeremy Rodi <me@medcat.me>"]
 
 [dependencies]
 nix = "0.10"
+libc = "0.2"
+log = "0.4"

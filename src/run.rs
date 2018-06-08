@@ -1,3 +1,6 @@
+use super::consts;
+use std::fmt;
+
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct Run {
@@ -36,6 +39,32 @@ pub struct Run {
     //
     // x86 doesn't have anything in struct kvm_sync_regs, so ignore.
     pub _pad2: [u8; 2048],
+}
+
+impl fmt::Debug for Run {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        let mut s = fmt.debug_struct("Run");
+
+        s.field("request_interrupt_window", &self.request_interrupt_window);
+        s.field("immediate_exit", &self.immediate_exit);
+        // most of the time, we won't want these.
+        // s.field("_pad1", &self._pad1.iter());
+        s.field("exit_reason", &self.exit_reason);
+        s.field(
+            "ready_for_interrupt_injection",
+            &self.ready_for_interrupt_injection,
+        );
+        s.field("if_flag", &self.if_flag);
+        s.field("flags", &self.flags);
+        s.field("cr8", &self.cr8);
+        s.field("apic_base", &self.apic_base);
+        s.field("exit", &self.exit.debug(self.exit_reason));
+        s.field("kvm_valid_regs", &self.kvm_valid_regs);
+        s.field("kvm_dirty_regs", &self.kvm_dirty_regs);
+        // s.field("_pad2", &self._pad2.iter());
+
+        s.finish()
+    }
 }
 
 /* KVM_EXIT_UNKNOWN */
@@ -227,4 +256,49 @@ pub union Exit {
     pub eoi: ExitEoi,
     // hyperv:  ExitHyperv
     pub _pad: [u8; 256],
+}
+
+pub struct ExitDebug(Exit, u32);
+
+impl fmt::Debug for Exit {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_list().entries(unsafe { self._pad }.iter()).finish()
+    }
+}
+
+impl Exit {
+    fn debug(self, reason: u32) -> ExitDebug {
+        ExitDebug(self, reason)
+    }
+}
+
+impl fmt::Debug for ExitDebug {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut tuple = f.debug_tuple("Exit");
+
+        match self.1 {
+            consts::KVM_EXIT_UNKNOWN => tuple.field(&unsafe { self.0.hw }),
+            consts::KVM_EXIT_FAIL_ENTRY => tuple.field(&unsafe { self.0.fail_entry }),
+            consts::KVM_EXIT_EXCEPTION => tuple.field(&unsafe { self.0.ex }),
+            consts::KVM_EXIT_IO => tuple.field(&unsafe { self.0.io }),
+            consts::KVM_EXIT_MMIO => tuple.field(&unsafe { self.0.mmio }),
+            consts::KVM_EXIT_HYPERCALL => tuple.field(&unsafe { self.0.hypercall }),
+            consts::KVM_EXIT_TPR_ACCESS => tuple.field(&unsafe { self.0.tpr_access }),
+            consts::KVM_EXIT_S390_SIEIC => tuple.field(&unsafe { self.0.s390_sieic }),
+            consts::KVM_EXIT_S390_RESET => tuple.field(&unsafe { self.0.s390_reset_flags }),
+            consts::KVM_EXIT_S390_UCONTROL => tuple.field(&unsafe { self.0.s390_ucontrol }),
+            consts::KVM_EXIT_DCR => tuple.field(&unsafe { self.0.dcr }),
+            consts::KVM_EXIT_INTERNAL_ERROR => tuple.field(&unsafe { self.0.internal }),
+            consts::KVM_EXIT_OSI => tuple.field(&unsafe { self.0.osi }),
+            consts::KVM_EXIT_PAPR_HCALL => tuple.field(&unsafe { self.0.papr_hcall }),
+            consts::KVM_EXIT_S390_TSCH => tuple.field(&unsafe { self.0.s390_tsch }),
+            consts::KVM_EXIT_EPR => tuple.field(&unsafe { self.0.epr }),
+            consts::KVM_EXIT_SYSTEM_EVENT => tuple.field(&unsafe { self.0.system_event }),
+            consts::KVM_EXIT_S390_STSI => tuple.field(&unsafe { self.0.s390_stsi }),
+            consts::KVM_EXIT_IOAPIC_EOI => tuple.field(&unsafe { self.0.eoi }),
+            _ => tuple.field(&unsafe { self.0._pad.iter() }).field(&self.1),
+        };
+
+        tuple.finish()
+    }
 }

@@ -22,6 +22,7 @@ pub const KVM_CAP_IRQ_INJECT_STATUS: i32 = 26;
 pub const KVM_CAP_ASSIGN_DEV_IRQ: i32 = 29;
 pub const KVM_CAP_JOIN_MEMORY_REGIONS_WORKS: i32 = 30;
 pub const KVM_CAP_IRQFD: i32 = 32;
+pub const KVM_CAP_PIT2: i32 = 33;
 pub const KVM_CAP_SET_BOOT_CPU_ID: i32 = 34;
 pub const KVM_CAP_IOEVENTFD: i32 = 36;
 pub const KVM_CAP_SET_IDENTITY_MAP_ADDR: i32 = 37;
@@ -178,6 +179,8 @@ pub const KVM_EXIT_S390_STSI: u32 = 25;
 pub const KVM_EXIT_IOAPIC_EOI: u32 = 26;
 pub const KVM_EXIT_HYPERV: u32 = 27;
 
+pub const KVM_CLOCK_TSC_STABLE: u32 = 2;
+pub const KVM_PIT_SPEAKER_DUMMY: u32 = 1;
 
 /// The vCPU is currently running.  Only supported on x86, ARM, and arm64.
 pub const KVM_MP_STATE_RUNNABLE: u32 = 0;

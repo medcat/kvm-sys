@@ -1,8 +1,7 @@
-//! `KVM_GET_IRQCHIP`, `KVM_SET_IRQCHIP`, `KVM_GET_VCPU_EVENTS`, `KVM_SET_VCPU_EVENTS`
+//! `KVM_GET_VCPU_EVENTS`, `KVM_SET_VCPU_EVENTS`
 //! `KVM_GET_DEBUGREGS`, and `KVM_SET_DEBUGREGS` are unsupported.
 
 pub const KVMIO: u8 = 0xAE;
-pub const KVM_CLOCK_TSC_STABLE: u32 = 2;
 
 use libc::ioctl;
 use nix;
@@ -187,6 +186,14 @@ pub struct IoEventFd {
     pub fd: i32,
     pub flags: u32,
     pub _pad: [u8; 36],
+}
+
+#[repr(C)]
+#[derive(Copy, Clone)]
+/// From the struct `kvm_pit_config`.
+pub struct PitConfig {
+    pub flags: u32,
+    pub _pad: [u32; 15],
 }
 
 #[repr(C)]
@@ -593,7 +600,7 @@ pub unsafe fn kvm_set_user_memory_region(
 /// This ioctl is supported only by the x86 architecture, and requires the
 /// [`KVM_CAP_SET_TSS_ADDR`] basic capability.  This is available only on the VM
 /// file descriptor.
-pub unsafe fn kvm_set_tss_addr(fd: RawFd, addr: i32) -> nix::Result<i32> {
+pub unsafe fn kvm_set_tss_addr(fd: RawFd, addr: u32) -> nix::Result<i32> {
     ehandle(ioctl(fd, io!(KVMIO, 0x47), addr))
 }
 
@@ -707,6 +714,22 @@ pub unsafe fn kvm_set_identity_map_addr(fd: RawFd, addr: *const u64) -> nix::Res
 /// descriptor.
 pub unsafe fn kvm_ioeventfd(fd: RawFd, io: *const IoEventFd) -> nix::Result<i32> {
     ehandle(ioctl(fd, iow!(KVMIO, 0x79, size_of::<IoEventFd>()), io))
+}
+
+/// Creates an in-kernel device model for the i8254 PIT. This call is only valid
+/// after enabling in-kernel irqchip support via [`kvm_create_irqchip`].  Valid
+/// flags to push are [`KVM_PIT_SPEAKER_DUMMY`].  PIT timer interrupts may use
+/// a per-VM kernel thread for injection. If it exists, this thread will have
+/// a name of the pattern `kvm-pit/<owner-process-pid>`.  When running a guest
+/// with elevated priorities, the scheduling parameters of this thread may have
+/// to be adjusted accordingly.  This IOCTL replaces the obsolete `KVM_CREATE_PIT`.
+///
+/// # Support
+/// This ioctl is supported by only the x86 architecture, and requires the
+/// `KVM_CAP_PIT2` capability.  This is only available on the VM file
+/// descriptor.
+pub unsafe fn kvm_create_pit2(fd: RawFd, pit: *const PitConfig) -> nix::Result<i32> {
+    ehandle(ioctl(fd, iow!(KVMIO, 0x77, size_of::<PitConfig>()), pit))
 }
 
 /// Allows setting an eventfd to directly trigger a guest interrupt.

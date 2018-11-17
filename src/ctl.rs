@@ -16,7 +16,14 @@ pub struct MsrList {
 }
 
 #[repr(C)]
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone)]
+pub union DirtyLogValue {
+    pub dirty_bitmap: *mut u64,
+    pub _pad: u64,
+}
+
+#[repr(C)]
+#[derive(Copy, Clone)]
 /// From the struct `kvm_dirty_log`.
 pub struct DirtyLog {
     pub slot: u32,
@@ -24,7 +31,7 @@ pub struct DirtyLog {
     /// This is meant to be a union of a pointer and a u64; the pointer has
     /// type `struct __user *dirty_bitmap`, with the u64 having the type
     /// `__u64 padding2`.  Make of that what you will.
-    pub value: u64,
+    pub value: DirtyLogValue,
 }
 
 #[repr(C)]
@@ -200,7 +207,7 @@ pub struct PitConfig {
 #[derive(Copy, Clone)]
 /// From the struct `kvm_irqfd`.
 pub struct IrqFd {
-    pub fd: u32,
+    pub fd: i32,
     pub gsi: u32,
     pub flags: u32,
     pub resampled: u32,
@@ -354,8 +361,7 @@ pub unsafe fn kvm_get_dirty_log(fd: RawFd, log: *const DirtyLog) -> nix::Result<
 /// This ioctl is supported by all architectures, and is a basic
 /// capability.  This is available only on the vCPU file descriptor.
 pub unsafe fn kvm_run(fd: RawFd) -> nix::Result<i32> {
-    let r = ioctl(fd, io!(KVMIO, 0x80), 0);
-    ehandle(r)
+    ehandle(ioctl(fd, io!(KVMIO, 0x80), 0))
 }
 
 /// Translates a virtual address according to the vCPU's current
@@ -481,6 +487,10 @@ pub unsafe fn kvm_create_irqchip(fd: RawFd) -> nix::Result<i32> {
 /// the VM file descriptor.
 pub unsafe fn kvm_irq_line(fd: RawFd, irq: *const IrqLevel) -> nix::Result<i32> {
     ehandle(ioctl(fd, iow!(KVMIO, 0x61, size_of::<IrqLevel>()), irq))
+}
+
+pub unsafe fn kvm_irq_line_status(fd: RawFd, irq: *mut IrqLevel) -> nix::Result<i32> {
+    ehandle(ioctl(fd, iorw!(KVMIO, 0x67, size_of::<IrqLevel>()), irq))
 }
 
 /// Sets the MSR that the Xen HVM guest uses to initialize its hypercall

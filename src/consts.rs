@@ -207,3 +207,7 @@ pub const KVM_MP_STATE_LOAD: u32 = 8;
 pub const KVM_IOEVENTFD_FLAG_DATAMATCH: u32 = 1 << 0;
 pub const KVM_IOEVENTFD_FLAG_PIO: u32 = 1 << 1;
 pub const KVM_IOEVENTFD_FLAG_DEASSIGN: u32 = 1 << 2;
+pub const KVM_IOEVENTFD_FLAG_VIRTIO_CCW_NOTIFY: u32 = 1 << 3;
+
+pub const KVM_IRQFD_FLAG_DEASSIGN: u32 = 1 << 0;
+pub const KVM_IRQFD_FLAG_RESAMPLE: u32 = 1 << 1;
